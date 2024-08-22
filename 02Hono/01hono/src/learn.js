@@ -27,12 +27,18 @@ app.post('/video', async (c) => {
 })
 
 app.get('/videos', async (c) => {
+
+   if (videos.length == 0) {
+      return c.json({ message: 'There is no video' })
+   }
+
    return streamText(c, async (stream) => {
       for (const video of videos) {
          await stream.writeln(JSON.stringify(video))
          // await stream.sleep(1000)
       }
    })
+
 })
 
 
@@ -49,7 +55,7 @@ app.get('/video/:id', (c) => {
    const video = videos.find((video) => video.id === id)
 
    if (!video) {
-      return c.json({message: 'Video not found'}, 404)
+      return c.json({ message: 'Video not found' }, 404)
    }
 
    return c.json(video)
@@ -58,17 +64,17 @@ app.get('/video/:id', (c) => {
 
 // Update
 
-app.put('/video/:id', async(c) => {
+app.put('/video/:id', async (c) => {
    const { id } = c.req.param()
    const index = videos.findIndex((video) => video.id === id)
 
    if (index === -1) {
-      return c.json({message: 'Video not found-update.'}, 404)
+      return c.json({ message: 'Video not found-update.' }, 404)
    }
 
    const { videoName, channelName, duration } = await c.req.json()
-   
-   videos[index] = {...videos[index], videoName, channelName, duration}
+
+   videos[index] = { ...videos[index], videoName, channelName, duration }
 
    return c.json(({
       message: 'video found',
@@ -79,19 +85,41 @@ app.put('/video/:id', async(c) => {
 
 // delete
 app.delete('/video/:id', async (c) => {
-   const { id } = c.req.param()
-   videos = videos.filter((video) => video.id !== id)
+   console.log('hi')
+   const { id } = c.req.param();
+   console.log('id:', id);
 
-   return c.json({message: 'video deleted'})
-})
+   // Check if id is provided
+   if (!id) {
+      return c.json({ message: 'ID is required' }, 400);
+   }
+
+   // Find the video with the matching ID
+   const videoIndex = videos.findIndex(video => video.id === id);
+
+   // If no video found, return a not found message
+   if (videoIndex === -1) {
+      return c.json({ message: 'Video not found' }, 404);
+   }
+
+   // Remove the video from the array
+   videos.splice(videoIndex, 1);
+   console.log('Video deleted:', id);
+
+   return c.json({ message: 'Video deleted successfully' });
+});
 
 
 // delete all videos
 
 app.delete('/videos', (c) => {
+   console.log(videos.length)
+   if (videos.length === 0) {
+      return c.json({ message: 'There is no video' },400)
+   }
    videos = []
-   return c.json({message: 'All videos deleted'})
-}) 
+   return c.json({ message: 'All videos deleted' })
+})
 
 
 export default app;
